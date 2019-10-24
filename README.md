@@ -5,4 +5,4 @@ As far as I'm aware, Money Manager EX doesn't have the ability to archive old tr
 
 "Usable" is defined as a file that can be opened by MM EX, read, analyzed, etc.
 
-Caveats:  I personally don't use stocks, shares, or assets, so none of those files will be checked in this code.
+Caveats:  I personally don't use stocks, shares, or assets, so none of those tables will be checked in this code.
