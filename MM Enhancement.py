@@ -21,6 +21,10 @@ def nice_print( cString, nNum ):
     cTemp = cString + ':'
     cTemp = cTemp.rjust(17)
     print( f"{cTemp} {nNum:{cFormat}}")
+
+def run_query( cQuery ):
+    c.execute( cQuery )
+    return c.fetchone()[0]
     
 ##############
 #
@@ -29,6 +33,7 @@ def nice_print( cString, nNum ):
 ##############
 conn = sqlite3.connect('B:\Money Manager EX\Crocketts.mmb')
 c = conn.cursor()
+cCutOff = '2017-01-01'
 cFormat = '>9,.2f'
 
 cSelect1 = """SELECT InitialBal
@@ -39,38 +44,61 @@ c.execute( cSelect1 )
 nInit = c.fetchone()[0]
 nice_print( 'Initial Balance', nInit)
 
-cSelect3 = """SELECT SUM( TransAmount )
-                FROM CheckingAccount_V1
-               WHERE ( AccountId = 1 )
-                 AND TransDate < '2017-01-01'
-                 AND TransCode = 'Deposit';
-           """
-c.execute( cSelect3 )
-nDeps = c.fetchone()[0]
+cSelect = """SELECT SUM( TransAmount )
+               FROM CheckingAccount_V1
+              WHERE ( AccountId = 1 )
+                AND TransDate < '""" + cCutOff + """'
+                AND TransCode = 'Deposit';
+          """
+nDeps = run_query( cSelect )
 nice_print( 'Deposits', nDeps)
 
-cSelect4 = """SELECT SUM( TransAmount )
-                FROM CheckingAccount_V1
-               WHERE ( AccountId = 1 )
-                 AND TransDate < '2017-01-01'
-                 AND TransCode = 'Withdrawal';
-           """
-c.execute( cSelect4 )
-nWiths = c.fetchone()[0]
+cSelect = """SELECT SUM( TransAmount )
+               FROM CheckingAccount_V1
+              WHERE ( AccountId = 1 )
+                AND TransDate < '""" + cCutOff + """'
+                AND TransCode = 'Withdrawal';
+          """
+nWiths = run_query( cSelect )
 nice_print( 'Withdrawals', nWiths)
 
 cSelect5 = """SELECT SUM( TransAmount )
                 FROM CheckingAccount_V1
                WHERE ( ToAccountId = 1 )
-                 AND TransDate < '2017-01-01'
+                 AND TransDate < '""" + cCutOff + """'
                  AND TransCode = 'Transfer';
            """
 c.execute( cSelect5 )
-nTrans = c.fetchone()[0]
-nice_print( 'Transfers', nTrans)
+nTransIn = c.fetchone()[0]
+nice_print( 'Transfers In', nTransIn)
 
-nNewBal = nInit + nDeps - nWiths + nTrans
+
+cSelect5 = """SELECT SUM( TransAmount )
+                FROM CheckingAccount_V1
+               WHERE ( AccountId = 1 )
+                 AND TransDate < '""" + cCutOff + """'
+                 AND TransCode = 'Transfer';
+           """
+c.execute( cSelect5 )
+nTransOut = c.fetchone()[0]
+nice_print( 'Transfers Out', nTransOut)
+
+nNewBal = nInit + nDeps - nWiths + nTransIn - nTransOut
 nice_print( 'Ending Balance', nNewBal)
+
+cSelect = """SELECT COUNT(1)
+               FROM CheckingAccount_V1
+              WHERE ( AccountId = 1 )
+                AND TransDate < '""" + cCutOff + """'
+                AND Status <> 'R';
+          """
+
+c.execute( cSelect )
+nOut = c.fetchone()[0]
+cMsg = 'No outstanding transactions'
+if nOut != 0:
+    cMsg = 'There are ' + str( nOut ) + ' outstanding transactions'
+    print( cMsg )
 
 
 c.close()
